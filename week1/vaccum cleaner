@@ -1,0 +1,114 @@
+import time
+import random
+
+def create_room(rows, cols, dirty_prob=0.3):
+    """
+    Creates a room grid with a specified number of rows and columns,
+    placing 'D' (dirty) tiles randomly based on dirty_prob.
+    ' ' represents a clean tile.
+   
+    :param rows: The number of rows in the grid.
+    :param cols: The number of columns in the grid.
+    :param dirty_prob: The probability (0.0 to 1.0) of a tile being dirty.
+    :return: A 2D list representing the room.
+    """
+    room = []
+    for _ in range(rows):
+        row = []
+        for _ in range(cols):
+            # Randomly decide if a tile is dirty
+            if random.random() < dirty_prob:
+                row.append('D')
+            else:
+                row.append(' ')
+        room.append(row)
+    return room
+
+def print_room(room, vacuum_pos):
+    """
+    Prints the current state of the room, including the vacuum cleaner's position.
+   
+    :param room: The 2D list representing the room.
+    :param vacuum_pos: A tuple (row, col) of the vacuum's position.
+    """
+    print("--- Room State ---")
+    rows, cols = len(room), len(room[0])
+    for r in range(rows):
+        row_str = "|"
+        for c in range(cols):
+            if (r, c) == vacuum_pos:
+                row_str += " V "  # Display the vacuum cleaner
+            else:
+                row_str += f" {room[r][c]} "
+        row_str += "|"
+        print(row_str)
+    print("------------------\n")
+
+def count_dirty_tiles(room):
+    """
+    Counts the number of dirty tiles remaining in the room.
+   
+    :param room: The 2D list representing the room.
+    :return: The total number of dirty tiles.
+    """
+    dirty_count = 0
+    for row in room:
+        dirty_count += row.count('D')
+    return dirty_count
+
+def vacuum_cleaner_ai(room, start_pos=(0, 0)):
+    """
+    Simulates an AI vacuum cleaner cleaning a room using a simple
+    reactive, snake-like movement pattern.
+   
+    :param room: The 2D list representing the room.
+    :param start_pos: The starting position (row, col) of the vacuum cleaner.
+    """
+    rows, cols = len(room), len(room[0])
+    current_row, current_col = start_pos
+   
+    # Initialize movement direction (1 for right, -1 for left)
+    direction = 1
+   
+    print("AI Vacuum Cleaner Simulation Starting...")
+    time.sleep(1)
+
+    while count_dirty_tiles(room) > 0:
+        # Check if the current position is dirty
+        if room[current_row][current_col] == 'D':
+            print(f"Cleaning tile at ({current_row}, {current_col})...")
+            room[current_row][current_col] = ' '  # Clean the tile
+           
+        print_room(room, (current_row, current_col))
+        time.sleep(0.5) # Pause for visualization
+
+        # AI's movement logic (snake pattern)
+        next_col = current_col + direction
+       
+        # Check for boundary conditions for horizontal movement
+        if not (0 <= next_col < cols):
+            # If at a boundary, change direction and move down one row
+            direction *= -1
+            current_row += 1
+            # Check for boundary conditions for vertical movement
+            if not (0 <= current_row < rows):
+                # If we have reached the end of the room,
+                # the loop will terminate on the next check.
+                break
+            current_col = current_col # Stay in the same column for the vertical move
+        else:
+            current_col = next_col
+
+    print("\nRoom is clean! Simulation ended.")
+
+# --- Main script ---
+if __name__ == "__main__":
+    # Define room dimensions
+    ROOM_ROWS = 5
+    ROOM_COLS = 8
+   
+    # Create the room with a random initial state
+    my_room = create_room(ROOM_ROWS, ROOM_COLS, dirty_prob=0.5)
+   
+    # Start the simulation with the vacuum at position (0, 0)
+    vacuum_cleaner_ai(my_room, start_pos=(0, 0))
