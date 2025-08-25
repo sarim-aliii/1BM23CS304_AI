@@ -1,1 +1,78 @@
+from copy import deepcopy
+
+GOAL_STATE = [[1, 2, 3],
+              [4, 5, 6],
+              [7, 8, 0]]
+
+DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+MOVE_NAMES = ['Up', 'Down', 'Left', 'Right']
+
+def to_tuple(state):
+    return tuple(tuple(row) for row in state)
+
+
+def find_blank(state):
+    for i in range(3):
+        for j in range(3):
+            if state[i][j] == 0:
+                return i, j
+
+def get_neighbors(state):
+    x, y = find_blank(state)
+    neighbors = []
+
+    for (dx, dy), move in zip(DIRECTIONS, MOVE_NAMES):
+        nx, ny = x + dx, y + dy
+        if 0 <= nx < 3 and 0 <= ny < 3:
+            new_state = deepcopy(state)
+            new_state[x][y], new_state[nx][ny] = new_state[nx][ny], new_state[x][y]
+            neighbors.append((new_state, move))
+    return neighbors
+
+def depth_limited_dfs(state, depth, path, visited):
+    if state == GOAL_STATE:
+        return path
+
+    if depth == 0:
+        return None
+
+    visited.add(to_tuple(state))
+
+    for neighbor, move in get_neighbors(state):
+        neighbor_tuple = to_tuple(neighbor)
+        if neighbor_tuple not in visited:
+            result = depth_limited_dfs(neighbor, depth - 1, path + [(neighbor, move)], visited)
+            if result is not None:
+                return result
+
+    visited.remove(to_tuple(state))
+    return None
+
+def iterative_deepening(start_state, max_depth=50):
+    for depth in range(max_depth):
+        visited = set()
+        result = depth_limited_dfs(start_state, depth, [(start_state, "Start")], visited)
+        if result is not None:
+            return result
+    return None
+
+def print_state(state):
+    for row in state:
+        print(" ".join(str(x) if x != 0 else " " for x in row))
+    print()
+
+if __name__ == "__main__":
+    start_state = [[1, 2, 3],
+                   [4, 0, 6],
+                   [7, 5, 8]]
+
+    solution = iterative_deepening(start_state)
+
+    if solution:
+        print(f"Solution found in {len(solution)-1} moves:\n")
+        for i, (state, move) in enumerate(solution):
+            print(f"Step {i}: {move}")
+            print_state(state)
+    else:
+        print("No solution found within depth limit.")
 
