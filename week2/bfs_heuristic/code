@@ -1,1 +1,94 @@
+import heapq
+
+GOAL_STATE = [[1, 2, 3],
+              [4, 5, 6],
+              [7, 8, 0]]
+
+DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)] 
+
+def to_tuple(state):
+    return tuple(tuple(row) for row in state)
+
+def goal_position(value):
+    for i in range(3):
+        for j in range(3):
+            if GOAL_STATE[i][j] == value:
+                return i, j
+
+def manhattan_distance(state):
+    distance = 0
+    for i in range(3):
+        for j in range(3):
+            value = state[i][j]
+            if value != 0:
+                goal_i, goal_j = goal_position(value)
+                distance += abs(i - goal_i) + abs(j - goal_j)
+    return distance
+
+def find_blank(state):
+    for i in range(3):
+        for j in range(3):
+            if state[i][j] == 0:
+                return i, j
+
+def get_neighbors(state):
+    neighbors = []
+    x, y = find_blank(state)
+
+    for dx, dy in DIRECTIONS:
+        nx, ny = x + dx, y + dy
+        if 0 <= nx < 3 and 0 <= ny < 3:
+            new_state = [row[:] for row in state]
+            new_state[x][y], new_state[nx][ny] = new_state[nx][ny], new_state[x][y]
+            neighbors.append(new_state)
+    return neighbors
+
+def a_star(start_state):
+    open_list = []
+    visited = set()
+
+    g_score = 0
+    h_score = manhattan_distance(start_state)
+    heapq.heappush(open_list, (g_score + h_score, g_score, start_state, []))
+
+    while open_list:
+        f, g, current, path = heapq.heappop(open_list)
+        current_tuple = to_tuple(current)
+
+        if current == GOAL_STATE:
+            return path + [current]
+
+        if current_tuple in visited:
+            continue
+
+        visited.add(current_tuple)
+
+        for neighbor in get_neighbors(current):
+            neighbor_tuple = to_tuple(neighbor)
+            if neighbor_tuple not in visited:
+                new_g = g + 1
+                new_h = manhattan_distance(neighbor)
+                heapq.heappush(open_list, (new_g + new_h, new_g, neighbor, path + [current]))
+
+    return None
+
+def print_state(state):
+    for row in state:
+        print(' '.join(str(x) if x != 0 else ' ' for x in row))
+    print()
+
+
+if __name__ == "__main__":
+    start_state = [[4, 8, 3],
+                   [1, 6, 2],
+                   [7, 0, 5]]
+
+    solution = a_star(start_state)
+
+    if solution:
+        print(f"Solution found in {len(solution) - 1} moves:\n")
+        for step in solution:
+            print_state(step)
+    else:
+        print("No solution found.")
 
