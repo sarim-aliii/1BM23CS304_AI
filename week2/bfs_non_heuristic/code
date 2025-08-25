@@ -1,1 +1,71 @@
+from collections import deque
+
+GOAL_STATE = [[1, 2, 3],
+              [4, 5, 6],
+              [7, 8, 0]]
+
+DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+def find_blank(state):
+    for i in range(3):
+        for j in range(3):
+            if state[i][j] == 0:
+                return i, j
+
+def get_neighbors(state):
+    neighbors = []
+    x, y = find_blank(state)
+    
+    for dx, dy in DIRECTIONS:
+        new_x, new_y = x + dx, y + dy
+        if 0 <= new_x < 3 and 0 <= new_y < 3:
+            new_state = [row[:] for row in state]
+            new_state[x][y], new_state[new_x][new_y] = new_state[new_x][new_y], new_state[x][y]
+            neighbors.append(new_state)
+    return neighbors
+
+def to_tuple(state):
+    return tuple(tuple(row) for row in state)
+
+def bfs(start_state):
+    visited = set()
+    queue = deque()
+    parent = {}
+
+    queue.append((start_state, []))
+    visited.add(to_tuple(start_state))
+
+    while queue:
+        current, path = queue.popleft()
+
+        if current == GOAL_STATE:
+            return path + [current]
+
+        for neighbor in get_neighbors(current):
+            neighbor_tuple = to_tuple(neighbor)
+            if neighbor_tuple not in visited:
+                visited.add(neighbor_tuple)
+                queue.append((neighbor, path + [current]))
+
+    return None
+
+def print_state(state):
+    for row in state:
+        print(' '.join(str(x) if x != 0 else ' ' for x in row))
+    print()
+
+
+if __name__ == "__main__":
+    start_state = [[1, 2, 3],
+                   [4, 0, 6],
+                   [7, 5, 8]]
+    
+    solution = bfs(start_state)
+
+    if solution:
+        print(f"Solution found in {len(solution)-1} moves:\n")
+        for step in solution:
+            print_state(step)
+    else:
+        print("No solution found.")
 
