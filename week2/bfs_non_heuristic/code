@@ -1,71 +1,94 @@
 from collections import deque
 
-GOAL_STATE = [[1, 2, 3],
-              [4, 5, 6],
-              [7, 8, 0]]
+# Goal state for the 8 puzzle
+goal_state = '123804765'  # Using '0' as the empty tile
 
-DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+# Moves: U, D, L, R (Up, Down, Left, Right)
+moves = {
+    'U': -3,
+    'D': 3,
+    'L': -1,
+    'R': 1
+}
 
-def find_blank(state):
-    for i in range(3):
-        for j in range(3):
-            if state[i][j] == 0:
-                return i, j
+# Valid moves for each index to prevent wrapping around rows/columns
+invalid_moves = {
+    0: ['U', 'L'], 1: ['U'], 2: ['U', 'R'],
+    3: ['L'],        5: ['R'],
+    6: ['D', 'L'], 7: ['D'], 8: ['D', 'R']
+}
 
-def get_neighbors(state):
-    neighbors = []
-    x, y = find_blank(state)
-    
-    for dx, dy in DIRECTIONS:
-        new_x, new_y = x + dx, y + dy
-        if 0 <= new_x < 3 and 0 <= new_y < 3:
-            new_state = [row[:] for row in state]
-            new_state[x][y], new_state[new_x][new_y] = new_state[new_x][new_y], new_state[x][y]
-            neighbors.append(new_state)
-    return neighbors
+# Function to generate new puzzle state after moving the blank
+def move_tile(state, direction):
+    index = state.index('0')
+    if direction in invalid_moves.get(index, []):
+        return None
 
-def to_tuple(state):
-    return tuple(tuple(row) for row in state)
+    new_index = index + moves[direction]
+    if new_index < 0 or new_index >= 9:
+        return None
 
+    state_list = list(state)
+    # Swap 0 with the target tile
+    state_list[index], state_list[new_index] = state_list[new_index], state_list[index]
+    return ''.join(state_list)
+
+# Helper function to print the state in 3x3 format
+def print_state(state):
+    for i in range(0, 9, 3):
+        # Replace '0' with space for readability
+        print(' '.join(state[i:i+3]).replace('0', ' '))
+    print()  # Blank line for spacing
+
+# BFS Algorithm with printing all visited states
 def bfs(start_state):
     visited = set()
-    queue = deque()
-    parent = {}
-
-    queue.append((start_state, []))
-    visited.add(to_tuple(start_state))
+    queue = deque([(start_state, [])])  # Each element is (state, path)
 
     while queue:
-        current, path = queue.popleft()
+        current_state, path = queue.popleft()
 
-        if current == GOAL_STATE:
-            return path + [current]
+        if current_state in visited:
+            continue
 
-        for neighbor in get_neighbors(current):
-            neighbor_tuple = to_tuple(neighbor)
-            if neighbor_tuple not in visited:
-                visited.add(neighbor_tuple)
-                queue.append((neighbor, path + [current]))
+        # Print each visited state
+        print("Visited state:")
+        print_state(current_state)
 
-    return None
+        if current_state == goal_state:
+            return path
 
-def print_state(state):
-    for row in state:
-        print(' '.join(str(x) if x != 0 else ' ' for x in row))
-    print()
+        visited.add(current_state)
 
+        for direction in moves:
+            new_state = move_tile(current_state, direction)
+            if new_state and new_state not in visited:
+                queue.append((new_state, path + [direction]))
 
-if __name__ == "__main__":
-    start_state = [[1, 2, 3],
-                   [4, 0, 6],
-                   [7, 5, 8]]
+    return None  # No solution found
+
+# Input initial state as a string (e.g., '123456780' where 0 is the blank)
+start = input("Enter start state (e.g., 724506831): ")
+
+if len(start) == 9 and set(start) == set('012345678'):
+    print("Start state:")
+    print_state(start)
     
-    solution = bfs(start_state)
+    result = bfs(start)
+    
+    if result is not None:
+        print("Solution found!")
+        print("Moves:", ' '.join(result))
+        print("Number of moves:", len(result))
+        print("1BM23CS304 Sarim\n")
 
-    if solution:
-        print(f"Solution found in {len(solution)-1} moves:\n")
-        for step in solution:
-            print_state(step)
+        # Print puzzle states after each move in solution path
+        current_state = start
+        for i, move in enumerate(result, 1):
+            current_state = move_tile(current_state, move)
+            print(f"Move {i}: {move}")
+            print_state(current_state)
     else:
-        print("No solution found.")
-
+        print("No solution exists for the given start state.")
+else:
+    print("Invalid input! Please enter a 9-digit string using digits 0-8 without repetition.")
